@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1e6b3c">
+  <title>Latschding</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>🥾 Latschding</h1>
+    <span id="syncStatus" class="sync-status" title="Verbindungsstatus"></span>
+  </header>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-view="eingabe" class="active">➕<span>Eingabe</span></button>
+    <button data-view="tagebuch">📖<span>Tagebuch</span></button>
+    <button data-view="cockpit">🎯<span>Cockpit</span></button>
+    <button data-view="charts">📈<span>Charts</span></button>
+    <button data-view="statistik">🏆<span>Statistik</span></button>
+    <button data-view="einstellungen">⚙️<span>Setup</span></button>
+  </nav>
+
+  <main id="main">
+
+    <!-- ============ Eingabe ============ -->
+    <section id="view-eingabe" class="view active">
+      <div class="card">
+        <h2 id="formTitle">Neue Tour</h2>
+        <form id="tourForm">
+          <input type="hidden" id="fId">
+          <div class="seg" id="fArtSeg">
+            <button type="button" data-art="Wandern" class="active">🥾 Wandern</button>
+            <button type="button" data-art="Radeln">🚴 Radeln</button>
+          </div>
+          <div class="form-row">
+            <label>Datum
+              <input type="date" id="fDatum" required>
+            </label>
+            <label>Tour
+              <input type="text" id="fTour" list="tourNames" placeholder="z. B. Lamberg" required autocomplete="off">
+              <datalist id="tourNames"></datalist>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>Strecke (km)
+              <input type="text" id="fKm" inputmode="decimal" placeholder="z. B. 6,82" required>
+            </label>
+            <label>Höhenmeter
+              <input type="number" id="fHm" inputmode="numeric" min="0" step="10" placeholder="z. B. 220">
+            </label>
+          </div>
+          <div class="form-row">
+            <label><span id="lblGehzeit">Gehzeit</span> (h:mm)
+              <input type="text" id="fGehzeit" inputmode="numeric" placeholder="1:28" pattern="\d{1,2}[:.,]\d{1,2}|\d{1,3}">
+            </label>
+            <label>Gesamtzeit (h:mm)
+              <input type="text" id="fGesamtzeit" inputmode="numeric" placeholder="1:34" pattern="\d{1,2}[:.,]\d{1,2}|\d{1,3}">
+            </label>
+          </div>
+          <label>Notiz (optional)
+            <input type="text" id="fNotiz" placeholder="Wetter, Begleitung, Besonderes …">
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn primary" id="btnSave">Speichern</button>
+            <button type="button" class="btn" id="btnCancelEdit" hidden>Abbrechen</button>
+            <button type="button" class="btn danger" id="btnDelete" hidden>Löschen</button>
+          </div>
+        </form>
+      </div>
+      <div class="card" id="lastToursCard">
+        <h2>Zuletzt eingetragen</h2>
+        <div id="lastTours"></div>
+      </div>
+    </section>
+
+    <!-- ============ Tagebuch ============ -->
+    <section id="view-tagebuch" class="view">
+      <div class="filter-row">
+        <div class="seg" id="diaryArtSeg">
+          <button data-art="" class="active">Alle</button>
+          <button data-art="Wandern">🥾</button>
+          <button data-art="Radeln">🚴</button>
+        </div>
+        <input type="search" id="diarySearch" placeholder="Tour suchen…">
+        <select id="diaryYear"></select>
+      </div>
+      <div id="diaryList"></div>
+    </section>
+
+    <!-- ============ Cockpit ============ -->
+    <section id="view-cockpit" class="view">
+      <div class="filter-row">
+        <select id="cockpitYear"></select>
+      </div>
+      <div id="cockpitContent"></div>
+    </section>
+
+    <!-- ============ Charts ============ -->
+    <section id="view-charts" class="view">
+      <div class="filter-row">
+        <select id="chartsYear"></select>
+      </div>
+      <div class="card">
+        <h2>Kumulierte Strecke vs. Ziel</h2>
+        <div class="seg" id="cumArtSeg">
+          <button data-art="Wandern" class="active">🥾 Wandern</button>
+          <button data-art="Radeln">🚴 Radeln</button>
+        </div>
+        <div class="chart-wrap"><canvas id="cumChart"></canvas></div>
+        <p class="chart-note" id="cumNote"></p>
+      </div>
+      <div class="card">
+        <h2>Monatswerte</h2>
+        <div class="seg" id="monthMetricSeg">
+          <button data-metric="km" class="active">km</button>
+          <button data-metric="hm">HM</button>
+          <button data-metric="touren">Touren</button>
+        </div>
+        <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ============ Statistik ============ -->
+    <section id="view-statistik" class="view">
+      <div class="filter-row">
+        <div class="seg" id="statArtSeg">
+          <button data-art="Wandern" class="active">🥾 Wandern</button>
+          <button data-art="Radeln">🚴 Radeln</button>
+        </div>
+        <select id="statYear"></select>
+      </div>
+      <div class="card">
+        <h2>Rekorde</h2>
+        <div id="records" class="records-grid"></div>
+      </div>
+      <div class="card">
+        <h2>Top-Touren</h2>
+        <div class="table-scroll"><table id="topToursTable"></table></div>
+      </div>
+      <div class="card">
+        <h2>Jahresvergleich</h2>
+        <div class="chart-wrap"><canvas id="yearChart"></canvas></div>
+        <div class="table-scroll"><table id="yearTable"></table></div>
+      </div>
+    </section>
+
+    <!-- ============ Einstellungen ============ -->
+    <section id="view-einstellungen" class="view">
+      <div class="card">
+        <h2>Verbindung (Google Sheets)</h2>
+        <p class="hint">Apps-Script-Web-App-URL und Token eintragen — Anleitung siehe
+          <code>apps-script/Code.gs</code> bzw. README.</p>
+        <label>Web-App-URL
+          <input type="url" id="cfgUrl" placeholder="https://script.google.com/macros/s/…/exec">
+        </label>
+        <label>Token
+          <input type="password" id="cfgToken" placeholder="Geheimes Token">
+        </label>
+        <div class="form-actions">
+          <button class="btn primary" id="btnConnect">Verbinden & laden</button>
+          <button class="btn" id="btnReload">Neu laden</button>
+        </div>
+        <p id="connectMsg" class="hint"></p>
+      </div>
+
+      <div class="card">
+        <h2>Jahresziele</h2>
+        <div class="form-row">
+          <label>Jahr <select id="goalYear"></select></label>
+          <label>🥾 Wandern (km) <input type="number" id="goalWandern" min="0" step="50"></label>
+          <label>🚴 Radeln (km) <input type="number" id="goalRadeln" min="0" step="50"></label>
+        </div>
+        <button class="btn primary" id="btnSaveGoals">Ziele speichern</button>
+      </div>
+
+      <div class="card">
+        <h2>Import (Excel / Google Sheets)</h2>
+        <p class="hint">TSV- oder CSV-Datei wählen (Spalten: Tag, Art, Tour, Strecke, HM,
+          Gehzeit, Gesamtzeit, Notiz) — oder Zeilen direkt aus der Tabelle kopieren und
+          unten einfügen. Duplikate werden übersprungen.
+          Deine Altdaten liegen fertig unter <code>import/touren-2026.tsv</code>.</p>
+        <input type="file" id="importFile" accept=".tsv,.csv,.txt">
+        <textarea id="importPaste" rows="4" placeholder="…oder hier Tabellenzeilen einfügen"></textarea>
+        <div class="form-actions">
+          <button class="btn" id="btnPreviewImport">Vorschau</button>
+          <button class="btn primary" id="btnDoImport" disabled>Importieren</button>
+        </div>
+        <div id="importPreview"></div>
+      </div>
+
+      <div class="card">
+        <h2>Demo-Modus</h2>
+        <p class="hint">Zum Ausprobieren ohne Google Sheet: erzeugt Beispieldaten, die nur
+          lokal im Browser liegen. Beim Verbinden mit dem Sheet wird der Demo-Modus beendet.</p>
+        <button class="btn" id="btnDemo">Demo-Modus starten</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="chart.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
