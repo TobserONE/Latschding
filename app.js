@@ -126,7 +126,21 @@
       .then(function (r) { return r.json(); });
   }
 
+  /** Datum in beliebiger Form → 'YYYY-MM-DD' (Sicherheitsnetz für alte Script-Versionen
+   *  oder von Hand ins Sheet getippte Zeilen). */
+  function normIso(v) {
+    var s = String(v == null ? '' : v).trim();
+    var iso = parseDateFlexible(s);
+    if (iso) return iso;
+    var d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+    return s;
+  }
+
   function applyData(data) {
+    data.tours.forEach(function (t) { t.datum = normIso(t.datum); });
     data.tours.sort(function (a, b) { return a.datum < b.datum ? -1 : a.datum > b.datum ? 1 : 0; });
     state.data = data;
     localStorage.setItem(LS_CACHE, JSON.stringify(data));
@@ -956,7 +970,11 @@
       renderAll();
     } else {
       var cache = readJson(LS_CACHE);
-      if (cache) { state.data = cache; renderAll(); }
+      if (cache) {
+        cache.tours.forEach(function (t) { t.datum = normIso(t.datum); });
+        state.data = cache;
+        renderAll();
+      }
       if (!state.config.url) switchView('einstellungen');
       loadRemote(false);
     }
