@@ -1,5 +1,5 @@
 /* Latschding Service Worker – Cache-First für App-Shell, Netz für Apps Script */
-var CACHE = 'latschding-v1';
+var CACHE = 'latschding-v3';
 var SHELL = [
   './',
   './index.html',
@@ -14,7 +14,10 @@ var SHELL = [
 
 self.addEventListener('install', function (e) {
   e.waitUntil(
-    caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () {
+    caches.open(CACHE).then(function (c) {
+      // cache:'reload' umgeht den HTTP-Cache – neue Version = garantiert frische Dateien
+      return c.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+    }).then(function () {
       return self.skipWaiting();
     })
   );

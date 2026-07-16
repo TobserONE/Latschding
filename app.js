@@ -688,8 +688,11 @@
     e.preventDefault();
     var km = parseNum($('fKm').value);
     if (isNaN(km) || km <= 0) { toast('Bitte gültige Strecke angeben'); return; }
+    // Datum tolerant einlesen (Browser ohne Date-Picker liefern z. B. "16.07.2026")
+    var datum = parseDateFlexible($('fDatum').value);
+    if (!datum) { toast('Bitte gültiges Datum angeben (z. B. 16.07.2026)'); return; }
     var tour = {
-      datum: $('fDatum').value,
+      datum: datum,
       art: state.formArt,
       tour: $('fTour').value.trim(),
       km: Math.round(km * 100) / 100,
