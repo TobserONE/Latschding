@@ -421,6 +421,8 @@
     if (state.charts[key]) { state.charts[key].destroy(); delete state.charts[key]; }
   }
 
+  function isNarrow() { return window.innerWidth < 480; }
+
   function chartDefaults() {
     Chart.defaults.color = cssVar('--muted');
     Chart.defaults.borderColor = cssVar('--grid');
@@ -453,12 +455,15 @@
     var target = [];
     for (var d2 = 1; d2 <= diy; d2++) target.push(Math.round(ziel * d2 / diy));
 
-    // Monatsgrenzen als Labels
+    // Monatsgrenzen als Labels – auf schmalen Displays nur jeden 2. Monat
     var labels = [], monthAt = {};
+    var narrow = isNarrow();
     for (var d3 = 1; d3 <= diy; d3++) {
       var dt = new Date(Number(year), 0, d3);
       labels.push(d3);
-      if (dt.getDate() === 1) monthAt[d3 - 1] = MONTHS[dt.getMonth()];
+      if (dt.getDate() === 1 && (!narrow || dt.getMonth() % 2 === 0)) {
+        monthAt[d3 - 1] = MONTHS[dt.getMonth()];
+      }
     }
 
     var color = artColor(art);
@@ -500,10 +505,15 @@
             grid: { display: false },
             ticks: {
               autoSkip: false, maxRotation: 0,
+              font: { size: narrow ? 10 : 12 },
               callback: function (v, i) { return monthAt[i] || null; }
             }
           },
-          y: { beginAtZero: true, title: { display: true, text: 'km' } }
+          y: {
+            beginAtZero: true,
+            title: { display: !narrow, text: 'km' },
+            ticks: { font: { size: narrow ? 10 : 12 } }
+          }
         }
       }
     });
@@ -532,16 +542,22 @@
       };
     });
 
+    var narrow = isNarrow();
     destroyChart('month');
     state.charts.month = new Chart($('monthChart'), {
       type: 'bar',
-      data: { labels: MONTHS, datasets: datasets },
+      data: {
+        // Auf schmalen Displays Ein-Buchstaben-Monate statt gedrehter Labels
+        labels: narrow ? MONTHS.map(function (m) { return m[0]; }) : MONTHS,
+        datasets: datasets
+      },
       options: {
         maintainAspectRatio: false,
         plugins: {
           legend: { labels: { usePointStyle: true, boxHeight: 6 } },
           tooltip: {
             callbacks: {
+              title: function (items) { return MONTHS[items[0].dataIndex]; },
               label: function (item) {
                 return item.dataset.label + ': ' + fmtKm(item.parsed.y, metric === 'km' ? 1 : 0) + ' ' + unit;
               }
@@ -549,8 +565,15 @@
           }
         },
         scales: {
-          x: { grid: { display: false } },
-          y: { beginAtZero: true, title: { display: true, text: unit } }
+          x: {
+            grid: { display: false },
+            ticks: { autoSkip: false, maxRotation: 0, font: { size: narrow ? 10 : 12 } }
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: !narrow, text: unit },
+            ticks: { font: { size: narrow ? 10 : 12 } }
+          }
         }
       }
     });
@@ -636,7 +659,11 @@
         plugins: { legend: { labels: { usePointStyle: true, boxHeight: 6 } } },
         scales: {
           x: { grid: { display: false } },
-          y: { beginAtZero: true, title: { display: true, text: 'km' } }
+          y: {
+            beginAtZero: true,
+            title: { display: !isNarrow(), text: 'km' },
+            ticks: { font: { size: isNarrow() ? 10 : 12 } }
+          }
         }
       }
     });
@@ -937,6 +964,15 @@
         renderView(state.view);
       });
     }
+
+    // Drehen/Resize → Charts mit passender Label-Dichte neu aufbauen
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        if (state.view === 'charts' || state.view === 'statistik') renderView(state.view);
+      }, 250);
+    });
   }
 
   function toggleDemo(on) {
