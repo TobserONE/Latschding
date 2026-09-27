@@ -137,6 +137,16 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); bor
 /* Cockpit */
 .goal-card h2 { display: flex; justify-content: space-between; align-items: baseline; }
 .goal-card h2 .gsum { font-size: 0.85rem; color: var(--text-secondary); font-weight: 400; }
+.goal-toggle { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+.goal-toggle .chev { display: inline-block; margin-left: 4px; color: var(--muted); transition: transform 0.2s; }
+.goal-card.collapsed .chev { transform: rotate(-90deg); }
+.goal-card.collapsed .goal-details { display: none; }
+/* Zugeklappt: kompakter, damit Karte + Kumulierte-Strecke-Chart auf einen Handybildschirm passen */
+.goal-card.collapsed { padding-top: 10px; padding-bottom: 10px; }
+.goal-card.collapsed h2 { margin-bottom: 4px; }
+.goal-card.collapsed .hero { font-size: 1.5rem; }
+.goal-card.collapsed .progress { margin: 6px 0 2px; }
+.goal-card.collapsed .progress-legend { margin-bottom: 2px; }
 .hero { font-size: 1.9rem; font-weight: 700; margin: 2px 0 0; }
 .hero small { font-size: 0.95rem; color: var(--muted); font-weight: 400; }
 .progress {

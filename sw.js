@@ -1,5 +1,5 @@
 /* Latschding Service Worker – Cache-First für App-Shell, Netz für Apps Script */
-var CACHE = 'latschding-v5';
+var CACHE = 'latschding-v6';
 var SHELL = [
   './',
   './index.html',

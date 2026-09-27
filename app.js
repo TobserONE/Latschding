@@ -6,6 +6,7 @@
   var LS_CACHE = 'latschding-cache';
   var LS_DEMO = 'latschding-demo';
   var LS_DEMODATA = 'latschding-demodata';
+  var LS_COCKPIT_OPEN = 'latschding-cockpit-open';
 
   var ARTS = ['Wandern', 'Radeln'];
   var ART_ICON = { Wandern: '🥾', Radeln: '🚴' };
@@ -18,9 +19,8 @@
     view: 'eingabe',
     formArt: 'Wandern',
     diary: { art: '', search: '', year: '' },
-    cockpitYear: null,
-    chartsYear: null,
-    cumArt: 'Wandern',
+    cockpitArt: 'Wandern',
+    cockpitOpen: localStorage.getItem(LS_COCKPIT_OPEN) !== '0',
     monthMetric: 'km',
     statArt: 'Wandern',
     statYear: '',
@@ -278,14 +278,13 @@
     if (v === 'eingabe') renderLastTours();
     if (v === 'tagebuch') renderDiary();
     if (v === 'cockpit') renderCockpit();
-    if (v === 'charts') renderCharts();
     if (v === 'statistik') renderStatistik();
     if (v === 'einstellungen') renderSettings();
   }
 
   function fillYearSelects() {
     var years = allYears();
-    [['diaryYear', true], ['cockpitYear', false], ['chartsYear', false], ['statYear', true], ['goalYear', false]]
+    [['diaryYear', true], ['cockpitYear', false], ['statYear', true], ['goalYear', false]]
       .forEach(function (cfg) {
         var sel = $(cfg[0]);
         var cur = sel.value;
@@ -360,55 +359,65 @@
 
   function renderCockpit() {
     var year = $('cockpitYear').value || String(new Date().getFullYear());
+    var art = state.cockpitArt;
     var isCurrent = Number(year) === new Date().getFullYear();
     var yearShare = isCurrent ? dayOfYear(todayIso()) / daysInYear(year) : 1;
-    var html = '';
 
-    ARTS.forEach(function (art) {
-      var tours = toursOf(year, art);
-      var km = sum(tours, function (t) { return t.km; });
-      var hm = sum(tours, function (t) { return t.hm; });
-      var zeit = sum(tours, function (t) { return t.gehzeit; });
-      var ziel = goalFor(year, art);
-      var pct = ziel ? Math.min(100, km / ziel * 100) : 0;
-      var soll = ziel * yearShare;
-      var delta = km - soll;
-      var pace = zeit ? km / (zeit / 60) : 0;
-      var color = artColor(art);
+    var tours = toursOf(year, art);
+    var km = sum(tours, function (t) { return t.km; });
+    var hm = sum(tours, function (t) { return t.hm; });
+    var zeit = sum(tours, function (t) { return t.gehzeit; });
+    var ziel = goalFor(year, art);
+    var pct = ziel ? Math.min(100, km / ziel * 100) : 0;
+    var soll = ziel * yearShare;
+    var delta = km - soll;
+    var pace = zeit ? km / (zeit / 60) : 0;
+    var color = artColor(art);
 
-      // Prognose & Bedarf (nur laufendes Jahr)
-      var prognose = isCurrent && yearShare > 0 ? km / yearShare : km;
-      var restWochen = isCurrent ? Math.max(1, (daysInYear(year) - dayOfYear(todayIso())) / 7) : 0;
-      var proWoche = isCurrent && ziel > km ? (ziel - km) / restWochen : 0;
+    // Prognose & Bedarf (nur laufendes Jahr)
+    var prognose = isCurrent && yearShare > 0 ? km / yearShare : km;
+    var restWochen = isCurrent ? Math.max(1, (daysInYear(year) - dayOfYear(todayIso())) / 7) : 0;
+    var proWoche = isCurrent && ziel > km ? (ziel - km) / restWochen : 0;
 
-      html += '<div class="card goal-card">' +
-        '<h2>' + ART_ICON[art] + ' ' + art + ' ' + year +
-        '<span class="gsum">' + tours.length + ' Touren · ' + fmtInt(hm) + ' HM</span></h2>' +
-        '<div class="hero">' + fmtKm(km) + ' <small>von ' + fmtInt(ziel) + ' km</small></div>';
+    var html = '<div class="card goal-card' + (state.cockpitOpen ? '' : ' collapsed') + '">' +
+      '<h2 class="goal-toggle" role="button" tabindex="0" aria-expanded="' + state.cockpitOpen + '">' +
+      '<span>' + ART_ICON[art] + ' ' + art + ' ' + year + '</span>' +
+      '<span class="gsum">' + tours.length + ' Touren · ' + fmtInt(hm) + ' HM <span class="chev">▾</span></span></h2>' +
+      '<div class="hero">' + fmtKm(km) + ' <small>von ' + fmtInt(ziel) + ' km</small></div>';
 
-      if (ziel) {
-        html += '<div class="progress"><div class="fill" style="width:' + pct.toFixed(1) + '%;background:' + color + '"></div>' +
-          (isCurrent ? '<div class="soll" style="left:' + (yearShare * 100).toFixed(1) + '%" title="Soll heute"></div>' : '') +
-          '</div>' +
-          '<div class="progress-legend"><span>' + pct.toFixed(0) + ' % erreicht</span>' +
-          (isCurrent ? '<span>Soll heute: ' + fmtKm(soll, 0) + ' km</span>' : '') + '</div>' +
-          '<div class="delta ' + (delta >= 0 ? 'pos' : 'neg') + '">' +
-          (delta >= 0 ? '▲ ' + fmtKm(delta, 0) + ' km vor dem Plan' : '▼ ' + fmtKm(-delta, 0) + ' km hinter dem Plan') +
-          '</div>';
-      }
+    if (ziel) {
+      html += '<div class="progress"><div class="fill" style="width:' + pct.toFixed(1) + '%;background:' + color + '"></div>' +
+        (isCurrent ? '<div class="soll" style="left:' + (yearShare * 100).toFixed(1) + '%" title="Soll heute"></div>' : '') +
+        '</div>' +
+        '<div class="progress-legend"><span>' + pct.toFixed(0) + ' % erreicht</span>' +
+        (isCurrent ? '<span>Soll heute: ' + fmtKm(soll, 0) + ' km</span>' : '') + '</div>' +
+        '<div class="delta ' + (delta >= 0 ? 'pos' : 'neg') + '">' +
+        (delta >= 0 ? '▲ ' + fmtKm(delta, 0) + ' km vor dem Plan' : '▼ ' + fmtKm(-delta, 0) + ' km hinter dem Plan') +
+        '</div>';
+    }
 
-      html += '<div class="kpi-grid">' +
-        kpi(fmtKm(pace), 'Ø km/h') +
-        kpi(tours.length ? fmtKm(km / tours.length) : '–', 'Ø km/Tour') +
-        kpi(fmtDurLong(zeit), speedLabel(art) + ' gesamt');
-      if (isCurrent && ziel) {
-        html += kpi(fmtKm(prognose, 0) + ' km', 'Prognose Jahresende') +
-          kpi(fmtKm(proWoche) + ' km', 'nötig pro Woche');
-      }
-      html += '</div></div>';
-    });
+    // Aufklappbarer Teil – im zugeklappten Zustand ausgeblendet
+    html += '<div class="goal-details"><div class="kpi-grid">' +
+      kpi(fmtKm(pace), 'Ø km/h') +
+      kpi(tours.length ? fmtKm(km / tours.length) : '–', 'Ø km/Tour') +
+      kpi(fmtDurLong(zeit), speedLabel(art) + ' gesamt');
+    if (isCurrent && ziel) {
+      html += kpi(fmtKm(prognose, 0) + ' km', 'Prognose Jahresende') +
+        kpi(fmtKm(proWoche) + ' km', 'nötig pro Woche');
+    }
+    html += '</div></div></div>';
 
     $('cockpitContent').innerHTML = html;
+    renderCharts();
+  }
+
+  function toggleCockpitCard() {
+    state.cockpitOpen = !state.cockpitOpen;
+    localStorage.setItem(LS_COCKPIT_OPEN, state.cockpitOpen ? '1' : '0');
+    var card = document.querySelector('#cockpitContent .goal-card');
+    if (!card) return;
+    card.classList.toggle('collapsed', !state.cockpitOpen);
+    card.querySelector('.goal-toggle').setAttribute('aria-expanded', state.cockpitOpen);
   }
 
   function kpi(v, l) {
@@ -436,8 +445,8 @@
   }
 
   function renderCumChart() {
-    var year = $('chartsYear').value || String(new Date().getFullYear());
-    var art = state.cumArt;
+    var year = $('cockpitYear').value || String(new Date().getFullYear());
+    var art = state.cockpitArt;
     var tours = toursOf(year, art);
     var ziel = goalFor(year, art);
     var diy = daysInYear(year);
@@ -525,12 +534,12 @@
   }
 
   function renderMonthChart() {
-    var year = $('chartsYear').value || String(new Date().getFullYear());
+    var year = $('cockpitYear').value || String(new Date().getFullYear());
     var metric = state.monthMetric;
     var f = { km: function (t) { return t.km; }, hm: function (t) { return t.hm; }, touren: function () { return 1; } }[metric];
     var unit = { km: 'km', hm: 'HM', touren: 'Touren' }[metric];
 
-    var datasets = ARTS.map(function (art) {
+    var datasets = [state.cockpitArt].map(function (art) {
       var byMonth = new Array(12).fill(0);
       toursOf(year, art).forEach(function (t) { byMonth[Number(t.datum.slice(5, 7)) - 1] += f(t); });
       return {
@@ -906,13 +915,21 @@
     $('diaryYear').addEventListener('change', function () { state.diary.year = this.value; renderDiary(); });
 
     $('cockpitYear').addEventListener('change', renderCockpit);
-    $('chartsYear').addEventListener('change', renderCharts);
-    $('cumArtSeg').addEventListener('click', function (e) {
+    $('cockpitArtSeg').addEventListener('click', function (e) {
       var b = e.target.closest('button');
       if (!b) return;
-      state.cumArt = b.dataset.art;
+      state.cockpitArt = b.dataset.art;
       this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('active', x === b); });
-      renderCumChart();
+      renderCockpit();
+    });
+    $('cockpitContent').addEventListener('click', function (e) {
+      if (e.target.closest('.goal-toggle')) toggleCockpitCard();
+    });
+    $('cockpitContent').addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.goal-toggle')) {
+        e.preventDefault();
+        toggleCockpitCard();
+      }
     });
     $('monthMetricSeg').addEventListener('click', function (e) {
       var b = e.target.closest('button');
@@ -970,7 +987,7 @@
     window.addEventListener('resize', function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
-        if (state.view === 'charts' || state.view === 'statistik') renderView(state.view);
+        if (state.view === 'cockpit' || state.view === 'statistik') renderView(state.view);
       }, 250);
     });
   }

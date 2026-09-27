@@ -20,7 +20,6 @@
     <button data-view="eingabe" class="active">➕<span>Eingabe</span></button>
     <button data-view="tagebuch">📖<span>Tagebuch</span></button>
     <button data-view="cockpit">🎯<span>Cockpit</span></button>
-    <button data-view="charts">📈<span>Charts</span></button>
     <button data-view="statistik">🏆<span>Statistik</span></button>
     <button data-view="einstellungen">⚙️<span>Setup</span></button>
   </nav>
@@ -92,26 +91,19 @@
       <div id="diaryList"></div>
     </section>
 
-    <!-- ============ Cockpit ============ -->
+    <!-- ============ Cockpit (inkl. Charts) ============ -->
     <section id="view-cockpit" class="view">
       <div class="filter-row">
-        <select id="cockpitYear"></select>
-      </div>
-      <div id="cockpitContent"></div>
-    </section>
-
-    <!-- ============ Charts ============ -->
-    <section id="view-charts" class="view">
-      <div class="filter-row">
-        <select id="chartsYear"></select>
-      </div>
-      <div class="card">
-        <h2>Kumulierte Strecke vs. Ziel</h2>
-        <div class="seg" id="cumArtSeg">
+        <div class="seg" id="cockpitArtSeg">
           <button data-art="Wandern" class="active">🥾 Wandern</button>
           <button data-art="Radeln">🚴 Radeln</button>
         </div>
-        <div class="chart-wrap"><canvas id="cumChart"></canvas></div>
+        <select id="cockpitYear"></select>
+      </div>
+      <div id="cockpitContent"></div>
+      <div class="card">
+        <h2>Kumulierte Strecke vs. Ziel</h2>
+        <div class="chart-wrap cum-wrap"><canvas id="cumChart"></canvas></div>
         <p class="chart-note" id="cumNote"></p>
       </div>
       <div class="card">
