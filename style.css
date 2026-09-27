@@ -140,13 +140,15 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); bor
 .goal-toggle { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
 .goal-toggle .chev { display: inline-block; margin-left: 4px; color: var(--muted); transition: transform 0.2s; }
 .goal-card.collapsed .chev { transform: rotate(-90deg); }
-.goal-card.collapsed .goal-details { display: none; }
+.goal-card.collapsed .kpi-extra { display: none; }
 /* Zugeklappt: kompakter, damit Karte + Kumulierte-Strecke-Chart auf einen Handybildschirm passen */
 .goal-card.collapsed { padding-top: 10px; padding-bottom: 10px; }
 .goal-card.collapsed h2 { margin-bottom: 4px; }
 .goal-card.collapsed .hero { font-size: 1.5rem; }
 .goal-card.collapsed .progress { margin: 6px 0 2px; }
 .goal-card.collapsed .progress-legend { margin-bottom: 2px; }
+.goal-card.collapsed .kpi-grid { grid-template-columns: 1fr 1fr; margin-top: 8px; }
+.goal-card.collapsed .kpi { padding: 5px 10px; }
 .hero { font-size: 1.9rem; font-weight: 700; margin: 2px 0 0; }
 .hero small { font-size: 0.95rem; color: var(--muted); font-weight: 400; }
 .progress {

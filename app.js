@@ -396,16 +396,16 @@
         '</div>';
     }
 
-    // Aufklappbarer Teil – im zugeklappten Zustand ausgeblendet
-    html += '<div class="goal-details"><div class="kpi-grid">' +
+    // Kacheln mit extra=true sind nur im aufgeklappten Zustand sichtbar
+    html += '<div class="kpi-grid">' +
       kpi(fmtKm(pace), 'Ø km/h') +
-      kpi(tours.length ? fmtKm(km / tours.length) : '–', 'Ø km/Tour') +
-      kpi(fmtDurLong(zeit), speedLabel(art) + ' gesamt');
+      kpi(fmtDurLong(zeit), speedLabel(art) + ' gesamt') +
+      kpi(tours.length ? fmtKm(km / tours.length) : '–', 'Ø km/Tour', true);
     if (isCurrent && ziel) {
-      html += kpi(fmtKm(prognose, 0) + ' km', 'Prognose Jahresende') +
-        kpi(fmtKm(proWoche) + ' km', 'nötig pro Woche');
+      html += kpi(fmtKm(prognose, 0) + ' km', 'Prognose Jahresende', true) +
+        kpi(fmtKm(proWoche) + ' km', 'nötig pro Woche', true);
     }
-    html += '</div></div></div>';
+    html += '</div></div>';
 
     $('cockpitContent').innerHTML = html;
     renderCharts();
@@ -420,8 +420,8 @@
     card.querySelector('.goal-toggle').setAttribute('aria-expanded', state.cockpitOpen);
   }
 
-  function kpi(v, l) {
-    return '<div class="kpi"><div class="kv">' + v + '</div><div class="kl">' + l + '</div></div>';
+  function kpi(v, l, extra) {
+    return '<div class="kpi' + (extra ? ' kpi-extra' : '') + '"><div class="kv">' + v + '</div><div class="kl">' + l + '</div></div>';
   }
 
   // ----- Charts -----
@@ -539,7 +539,7 @@
     var f = { km: function (t) { return t.km; }, hm: function (t) { return t.hm; }, touren: function () { return 1; } }[metric];
     var unit = { km: 'km', hm: 'HM', touren: 'Touren' }[metric];
 
-    var datasets = [state.cockpitArt].map(function (art) {
+    var datasets = ARTS.map(function (art) {
       var byMonth = new Array(12).fill(0);
       toursOf(year, art).forEach(function (t) { byMonth[Number(t.datum.slice(5, 7)) - 1] += f(t); });
       return {
